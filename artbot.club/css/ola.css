@@ -1,0 +1,184 @@
+html, body, main {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	font-family: 'Didact Gothic', sans-serif;
+}
+
+
+
+.chat-messageholder {
+	position: relative;
+	padding: 2px;
+	overflow: scroll;
+	flex: 1;
+	border-radius: 10px;
+	background-color: hsla(230, 30%, 40%, 1);
+}
+
+.chat-row {
+	border-radius: none;
+	padding: 2px;
+	display: flex;
+	width: 100%;
+}
+
+
+.chat-row.reverse {
+	flex-direction: row-reverse;
+	text-align: right;
+
+}
+.chat-row.center {
+
+
+}
+
+.chat-row.debug .chat-bubble {
+	width: 100%;
+	text-align: center;
+	border-radius: 10px;
+	box-shadow: none;
+	font-size: 80%;
+	font-style: italic;
+	background-color: hsla(230, 0%, 100%, .4);
+}
+.chat-row.center .chat-bubble {
+	width: 100%;
+	text-align: center;
+	border-radius: 10px;
+	box-shadow: none;
+	background-color: hsla(230, 0%, 100%, .4);
+}
+
+.chat-speaker {
+	font-size: 50%;
+	width: 40px;
+	height: 40px;
+}
+.chat-bubble.mini {
+	transform: scale(.1,.1);
+}
+
+.chat-bubble {
+	position: relative;
+	transform-origin: top left;
+	transform: scale(1,1);
+	transition: transform 0.08s;
+	padding: 2px;
+	margin: 2px;
+	background-color: hsla(40, 50%, 98%);
+	box-shadow: 1px 2px 5px hsla(0, 0%, 0%, .3);
+	border-radius: 10px;
+	border-top-left-radius: 0px;
+	border-bottom-right-radius: 10px;
+}
+
+.chat-messages {
+	flex: 1;
+	position: relative;
+	overflow-y: scroll;
+}
+
+.chat-data {
+	height: 20px;
+	background-color: hsla(40, 50%, 98%);
+	box-shadow: 1px 2px 5px hsla(0, 0%, 0%, .3);
+}
+
+
+.reverse .chat-msg {
+	
+}
+
+.reverse .chat-msg {
+	border-top-left-radius: 10px;
+	border-bottom-right-radius: 0px;
+	transform-origin: bottom right;
+}
+.chat-msg .recipient {
+	font-size: 50%;
+}
+
+#main-cols {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	display: flex;
+}
+
+.column-holder {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	display: flex;
+}
+
+
+.column {
+	position: relative;
+	flex: 1;
+	background-color: hsla(40, 50%, 94%);
+	margin: 5px;
+	padding: 2px;
+	display: flex;
+	flex-direction: column;
+
+}
+
+.column-section {
+	position: relative;
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+}
+
+
+.card {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	background-color: hsla(40, 50%, 95%);
+	box-shadow: 1px 2px 5px rgba(0, 0, 0, .3);
+	padding: 3px;
+	margin: 2px;
+	overflow: hidden;
+}
+
+.card-header {
+	position: relative;
+	flex-direction: row;
+	display: flex;
+}
+.card-content {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	position: relative;
+}
+
+
+.card-controls {
+	flex: 1;
+	text-align: right;
+}
+
+.card-selected {
+	
+	flex: 1 0 auto;
+	background-color: hsla(40, 50%, 85%);
+	box-shadow: 1px 2px 5px rgba(50, 40, 0, 1);
+}
+
+
+.channel-control-human {
+	max-height: 100px;
+}
+.channel-roomcontrols  {
+max-height: 125px;
+}
+
+.channel-panel {
+	overflow: scroll;
+}
+
