@@ -29,6 +29,8 @@ function parseChanceryMap(rawMap, id) {
 
 	// Make a shallow copy, we'll overwrite most stuff
 	let map = mapObject(rawMap, obj => obj);
+	if (map.grammar === undefined)
+		map.grammar = {}
 
 	map.states = mapObject(rawMap.states, (state, key) => {
 
@@ -124,7 +126,7 @@ function parseChanceryUnitExpression(rawExp) {
 function parseChanceryParameters(rawParams) {
 
 	let params = splitOnProtected(chanceryProtection, "expression", rawParams, ",")
-	let p2 = params.map(p => parseChanceryExpression(p)).filter(p=> p);
+	let p2 = params.map(p => parseChanceryExpression(p)).filter(p => p);
 	return p2;
 }
 
@@ -135,7 +137,7 @@ function parseChanceryParameters(rawParams) {
 function parseChanceryPath(rawPath) {
 
 	let sections = splitOnProtected(chanceryProtection, "expression", rawPath, "/")
-	
+
 	return {
 		type: "path",
 		sections: sections.map(s => parseChanceryKey(s)),
@@ -246,7 +248,7 @@ function parseChanceryExit(rawExit, index) {
 			}
 
 			if (targetMacros.indexOf(s2[0]) < 0)
-				target = parseChanceryExpression(s2[0]);
+				target = parseChanceryKey(s2[0]);
 
 
 			return {
@@ -288,8 +290,21 @@ function parseChanceryState(rawState, id) {
 		id: id,
 		onEnter: [],
 		onExit: [],
-		exits: rawState.exits ? rawState.exits.map((exit, index) => parseChanceryExit(exit, index)) : [],
+		exits: []
 	}
+
+	if (rawState.exits) {
+		let rawExits = rawState.exits;
+		if (typeof rawExits === "string") {
+			rawExits = [rawExits]
+		}
+
+		if (!Array.isArray(rawExits)) {
+			console.warn("Exit list has wrong type, should be array", rawState)
+		}
+		state.exits = rawExits.map((exit, index) => parseChanceryExit(exit, index))
+	}
+
 
 
 	if (rawState.onEnterSay)

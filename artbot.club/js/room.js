@@ -12,7 +12,7 @@ function Room(chanceryTemplates) {
 
 	//this.createChannel("canvas", 2, "drawing", {});
 	this.createChannel("chat", 2, defaultChatID, {});
-this.createParticipant();
+	this.createParticipant();
 
 	if (chanceryTemplates)
 		chanceryTemplates.forEach(template => {
@@ -54,7 +54,7 @@ Room.prototype.createUI = function(holder) {
 		holder: this.controlCard.content,
 		label: "add:",
 		goLabel: "+",
-		ids: ["human"].concat(Object.keys(testChanceries)),
+		ids: ["human"].concat(availableChanceries.map(s => s.id)),
 		onSelect: (id) => {
 			this.createParticipant(id);
 		},
@@ -180,7 +180,7 @@ Room.prototype.enter = function(participant) {
 
 	let column = 0;
 	if (participant.type === "bot")
-		column = participant.idNumber%2;
+		column = participant.idNumber % 2;
 	//console.log("ENTER: ", participant)
 	this.participants[participant.id] = {
 		p: participant,
@@ -252,7 +252,7 @@ Room.prototype.getMessage = function(msg) {
 
 	// Hold an auction for this message
 	if (msg.respondable) {
-		console.log("Auction for msg: " + msgToString(msg))
+		console.log("\nAuction for msg: " + msgToString(msg))
 		// If the message is not multi-use, have everyone bid on it
 		let bids = targetPartipants.map(p => p.p.bidOnMessage(msg));
 
@@ -265,9 +265,10 @@ Room.prototype.getMessage = function(msg) {
 		bids = bids.filter(bid => bid.value !== 0)
 
 
+
 		// Distribute the message to any participants
 		bids.forEach((bid, index) => {
-			console.log(bid)
+			console.log(" - " + bid.p.id + "(" + bid.ptr.id  + ") bid: " + bid.value)
 			bid.isWinner = (index === 0)
 			// Was this actually a bid?
 			if (bid.p) {
@@ -275,7 +276,7 @@ Room.prototype.getMessage = function(msg) {
 			}
 		});
 		if (bids.length === 0) {
-			console.log("... no-one bids on " + msgToString(msg))
+			console.log("   ... no-one bids on " + msgToString(msg))
 		}
 	}
 }
@@ -283,9 +284,9 @@ Room.prototype.getMessage = function(msg) {
 function msgToString(msg) {
 	let s = '"' + msg.msg + '"'
 	if (msg.from)
-		s += " from " + msg.from.id
+		s += " from " + (msg.from.id || msg.from)
 	if (msg.to)
-		s += " to " + msg.to.id
+		s += " to " +(msg.to.id || msg.to)
 	return s;
 }
 

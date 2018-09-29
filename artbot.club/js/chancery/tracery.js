@@ -108,20 +108,22 @@ TraceryGrammar.prototype.expand = function(rule, context) {
 
 }
 
-TraceryGrammar.prototype.createContext = function() {
+TraceryGrammar.prototype.createContext = function(settings) {
 	// Create an object to track stateful things in an expansion,
 	// like:
 	// overlay stacks (including shuffles)
 	// modifiers
 
-	return new TraceryContext(this);
+
+	return new TraceryContext(this, settings);
 }
 
-function TraceryContext(grammar, blackboard) {
-	this.modifiers = {}
+function TraceryContext(grammar, settings) {
 	this.overlays = {}
-	this.blackboard = blackboard;
+	this.blackboard = settings.blackboard;
+	this.modifiers = settings.modifiers;
 	this.grammar = grammar;
+
 }
 
 TraceryContext.prototype.expand = function(rule) {
@@ -136,27 +138,41 @@ TraceryContext.prototype.getRuleSet = function(key, node) {
 	if (key.startsWith("/")) {
 		// TODO dynamic path
 		let path = key.split("/").slice(1);
-		console.log("PAAAATH", path) 
+
 		if (this.blackboard) {
 			let rules = this.blackboard.getAtPath(path)
-			console.log("rules")
+			if (typeof rules === "string")
+				return [rules]
+			if (rules === undefined) {
+				console.warn("No rules found for path", path)
+				return "{{" + path.join("/") + "}}"
+			}
+
+			return rules;
+
 		} else {
-			console.warn("")
+			console.warn("Can't use blackboard paths, no blackboard in this context")
 		}
 	}
 	if (!(key in this.grammar.symbols)) {
 		console.warn("No symbol: '" + key + "'")
-		return ["[[" + key + "]]"]
+		return "{{" + key + "}}"
 	}
 	return this.grammar.symbols[key];
 }
 
 // Do fancy stuff like conditionals, shuffling, suppression
 TraceryContext.prototype.getRule = function(ruleset, node) {
-	return getRandom(ruleset);
+	let rule;
+	if (typeof ruleset === "string")
+		rule = ruleset
+	else rule = getRandom(ruleset);
+
+	return rule;
 }
 
 function TraceryNode(template) {
+
 	this.template = template;
 
 	this.type = template.type;
@@ -172,7 +188,7 @@ TraceryNode.prototype.expand = function(context) {
 
 			this.sections.forEach(s => s.expand(context));
 			this.finished = this.sections.map(s => s.finished).join("");
-
+			//console.log("'" + this.finished + "'" + ": " + this.sections.map(s => '"' + s.finished + '"').join(","))
 			break;
 
 		case "tag":
@@ -180,9 +196,28 @@ TraceryNode.prototype.expand = function(context) {
 			this.ruleSet = context.getRuleSet(this.key);
 
 			this.selectedRule = context.getRule(this.ruleSet, this);
+
+			// Process an unprocessed rule
+			if (typeof this.selectedRule === "string") {
+				this.selectedRule = parseRule(this.selectedRule);
+			}
 			this.subnode = new TraceryNode(this.selectedRule);
 			this.subnode.expand(context);
 			this.finished = this.subnode.finished;
+			if (this.template.modifiers)
+				this.template.modifiers.forEach(m => {
+					if (!context.modifiers) {
+						console.warn("No modifiers in current context, can't apply modifier:", m.value)
+					} else {
+						let mod = context.modifiers[m.value]
+						if (mod === undefined)
+							console.warn("No modifiers named:", m.value)
+						else {
+							this.finished = mod(this.finished)
+						}
+					}
+
+				})
 			break;
 		case "plaintext":
 			this.finished = this.template.value;
@@ -208,16 +243,18 @@ function traceryToRegex(rule, grammar) {
 }
 
 function traceryRuleToRegex(rule, grammar) {
-	let sections = rule.raw.split("#");
+	let rawRule = rule.raw || rule;
+
+	let sections = rawRule.split("#");
 
 	let r = sections.map((s, index) => {
 		if (index % 2 == 0) {
-			
+
 			// Allow any spaces or punctuation?
 			s = s.replace(" ", "\\s*");
-			s = s.replace("?", "\\?");
-			s = s.replace(".", "\\.");
-			s = s.replace("!", "\\!");
+			// s = s.replace("?", "\\?");
+			// s = s.replace(".", "\\.");
+			// s = s.replace("!", "\\!");
 			s = s.replace("VAR", "(.*)");
 
 			return s
@@ -235,9 +272,37 @@ function traceryRuleToRegex(rule, grammar) {
 // Create a regular expression from a tracery symbol
 function traceryTagToRegex(key, grammar) {
 
-	return "(" + grammar.symbols[key].map(r => {
+	let tagReg = grammar.symbols[key].map(r => {
 		return traceryRuleToRegex(r, grammar);
-	}).join("|") + ")";
+	}).join("|")
+	return "(" + tagReg + ")";
+}
+
+
+function getMatchBid(grammar, matchRule, sample) {
+	let reg = traceryToRegex(matchRule, grammar);
+	
+	let match = reg.exec(sample);
+	
+
+	if (match === null)
+		return {
+			bid: 0
+		}
+
+	else {
+		// Calculate the match pct
+		return {
+			bid: 1,
+			matches: match.slice(0)
+		}
+	}
+
+	// let found = sample.toLowerCase().indexOf(pattern.toLowerCase())
+
+	// if (found >= 0)
+	// 	return pattern.length / sample.length;
+	// return 0;
 }
 
 //============================================

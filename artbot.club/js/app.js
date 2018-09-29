@@ -1,11 +1,16 @@
+let startChanceries = ["hellobot", "letterbot", "buzzbot"];
 let paused = false;
 let pauseStart;
 
-$(document).keyup(() => {
+$(document).keyup((e) => {
 	console.log("KEYUP")
-	paused = !paused;
-	if (paused)
-		pauseStart = Date.now();
+	if (e.keyCode == 32) {
+		paused = !paused;
+		if (paused)
+			pauseStart = Date.now();
+
+		console.log("PAUSED: " + paused)
+	}
 })
 
 let testChanceries = {};
@@ -16,6 +21,7 @@ for (var i = 0; i < 0; i++) {
 	let id = toCamelCase(title);
 	chancery.title = title;
 	chancery.id = id;
+
 	testChanceries[id] = chancery;
 
 }
@@ -23,10 +29,15 @@ for (var i = 0; i < 0; i++) {
 let room;
 $(function() {
 
-	let chanceries = mapObjectToArray(localChanceries, (c) => {
-		return c
-	})
-	room = new Room(chanceries);
+	availableChanceries = mapObjectToArray(localChanceries, c => c)
+		.concat(mapObjectToArray(testChanceries, c => c))
+
+
+	room = new Room(startChanceries.map(id => {
+		if (localChanceries[id])
+			return localChanceries[id]
+		console.warn("no local chancery named: " + id)
+	}));
 
 	room.createUI($("#main-cols"));
 	room.getMessage({

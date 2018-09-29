@@ -6,11 +6,14 @@ function Bot(chanceryTemplate) {
 	this.id = "Bot" + this.idNumber;
 	this.idColor = new KColor(this.idNumber * .221, 1, .5);
 	this.type = "bot";
+	if (chanceryTemplate.voice)
+		this.voice = chanceryTemplate.voice
 
 	//let voices = ["Icelandic Male", "Spanish Female", "UK English Female", "UK English Male", "US English Male", "US English Female"]
 	// let voices = ["UK English Female", "UK English Male", "US English Female"]
 	// this.voice = {
 	// 	letterSpeed: 3,
+	// voiceType "UK English Female"
 	// 	voiceType: getRandom(["UK", "US"]) + " English " + getRandom(["Male", "Female"])
 	// }
 	// this.voice.voiceType = voices[this.idNumber%4]
@@ -18,7 +21,7 @@ function Bot(chanceryTemplate) {
 
 	// Pick out a chancery map
 
-	
+
 	this.chancery = new Chancery(chanceryTemplate);
 	// console.log(this.chancery)
 	this.chancery.on("say", (msg) => {
@@ -45,11 +48,11 @@ function Bot(chanceryTemplate) {
 	}, Math.random() * 100 + 1000)
 
 	setInterval(() => {
-		//if (!paused) {
+		if (!paused) {
 
-		this.chancery.update()
-		//}
-	}, 100);
+			this.chancery.update()
+		}
+	}, 50);
 
 
 
@@ -140,7 +143,7 @@ Bot.prototype.getMsg = function(msg, bid) {
 	// This message was bought at auction
 	if (bid) {
 		if (bid.isWinner) {
-			console.log("auction won, " + this.id + " " + msg.msg)
+			console.log("   Auction won, " + this.id + " " + msg.msg, "Matches: ", bid.matches)
 			this.chancery.input(msg, bid);
 		}
 	} else {

@@ -2281,6 +2281,17 @@ function shuffle(a) {
 	}
 }
 
+
+function isVowel(c) {
+    var c2 = c.toLowerCase();
+    return (c2 === 'a') || (c2 === 'e') || (c2 === 'i') || (c2 === 'o') || (c2 === 'u');
+};
+
+function isAlphaNum(c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
+};
+
+
 function toCamelCase(str) {
 
 	str = str.replace(/[.,'"-:;?]/g, "");

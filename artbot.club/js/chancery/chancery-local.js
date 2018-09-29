@@ -1,3 +1,94 @@
+let basicMods = {
+	capitalizeAll: function(s) {
+		var s2 = "";
+		var capNext = true;
+		for (var i = 0; i < s.length; i++) {
+
+			if (!isAlphaNum(s.charAt(i))) {
+				capNext = true;
+				s2 += s.charAt(i);
+			} else {
+				if (!capNext) {
+					s2 += s.charAt(i);
+				} else {
+					s2 += s.charAt(i).toUpperCase();
+					capNext = false;
+				}
+
+			}
+		}
+		return s2;
+	},
+
+	capitalize: function(s) {
+		return s.charAt(0).toUpperCase() + s.substring(1);
+	},
+
+	a: function(s) {
+		if (s.length > 0) {
+			if (s.charAt(0).toLowerCase() === 'u') {
+				if (s.length > 2) {
+					if (s.charAt(2).toLowerCase() === 'i')
+						return "a " + s;
+				}
+			}
+
+			if (isVowel(s.charAt(0))) {
+				return "an " + s;
+			}
+		}
+
+		return "a " + s;
+
+	},
+
+	s: function(s) {
+		switch (s.charAt(s.length - 1)) {
+			case 's':
+				return s + "es";
+				break;
+			case 'h':
+				return s + "es";
+				break;
+			case 'x':
+				return s + "es";
+				break;
+			case 'y':
+				if (!isVowel(s.charAt(s.length - 2)))
+					return s.substring(0, s.length - 1) + "ies";
+				else
+					return s + "s";
+				break;
+			default:
+				return s + "s";
+		}
+	},
+	ed: function(s) {
+		switch (s.charAt(s.length - 1)) {
+			case 's':
+				return s + "ed";
+				break;
+			case 'e':
+				return s + "d";
+				break;
+			case 'h':
+				return s + "ed";
+				break;
+			case 'x':
+				return s + "ed";
+				break;
+			case 'y':
+				if (!isVowel(s.charAt(s.length - 2)))
+					return s.substring(0, s.length - 1) + "ied";
+				else
+					return s + "d";
+				break;
+			default:
+				return s + "ed";
+		}
+	}
+}
+
 let hpn = {
 	"hpnStart": ["Brax", "Brash", "Stump", "Tangle", "Star", "Stage", "Black", "Red", "Chamb", "Whit", "Gren", "Brook", "Bright", "North", "Hells", "Saints", "Fair"],
 	"hpnEnd": ["bridge", "bury", "ton", "fright", "borough", "ford", "blood", "ly", "brox", "bray", "bay", "smith", "town", "lyn", "ferry", "ghost", "haven", "brook", "oaks", "ox", "wood"],
@@ -25,10 +116,76 @@ let localChanceries = {
 	// 		}
 	// 	}
 	// },
+	hellobot: {
+		id: "hellobot",
+		modifiers: basicMods,
+		title: "Hello Bot",
+		grammar: {
+			animal: ["cat", "dog", "lemur", "alpaca", "corgi", "zebra", "leopard", "cougar", "cobra", "unicorn", "dragon", "llama", "hamster", "elephant"],
+		},
+		voice: {
+			letterSpeed: 3,
+			voiceType: "UK English Female"
+		},
+		states: {
+			origin: {
+				exits: [
+					"wait:1 ->@ 'Hello I am #animal.a#'",
+				]
+
+			}
+		},
+	},
+
+	letterbot: {
+		id: "letterbot",
+		title: "Letter-writing bot",
+		
+		grammar: {
+			animal: ["cat", "dog", "lemur", "alpaca", "corgi", "zebra", "leopard", "cougar", "cobra", "unicorn", "dragon", "llama", "hamster", "elephant"],
+
+			letter: "abcdeabcdeabcdefghijklmnopqrstuvwxyzzzzz".split(""),
+			word: ["#letter##word#", "#letter##letter##word#", "#letter##letter##letter##letter##letter##letter##letter##letter##letter##letter#", "#letter##letter##letter##letter##letter##letter##letter##letter##letter##letter##letter#"]
+		},
+		states: {
+			origin: {
+				exits: ["'#animal#' ->@ '#/INPUT_SOURCE# said #/INPUT#, animal: #/MATCH_0#'",
+					"wait:1 ->@ '#word#'",
+				]
+
+			}
+		},
+		modifiers: basicMods,
+		fxns: {
+
+		}
+	},
+	buzzbot: {
+		grammar: {
+			vowel: "aeiou".split(""),
+		},
+		id: "buzzbot",
+		desc: "I add extra zs to anything with zs in it",
+		states: {
+			origin: {
+				exits: ["'#vowel#' ->@ 'VOWEL:#/MATCH_0#'", "'z' ->@ '#/INPUT.z#'"]
+			}
+		},
+		modifiers: {
+			z: (s) => {
+				console.log("ZZZify: ", s, s.replace("z", "zz"))
+				return s.replace("z", "zzzz")
+			}
+		},
+		fxns: {
+
+		}
+	},
 
 	coffee: {
-		id: "coffee", 
+		id: "coffee",
 		title: "coffeebot",
+		modifiers: basicMods,
 		grammar: {
 			hpnEnd: hpn.hpnEnd,
 			hpn: hpn.hpn,
@@ -36,9 +193,14 @@ let localChanceries = {
 			name: hpn.name,
 			surnameBase: hpn.surnameBase,
 			surname: hpn.surname,
+			"landscapeAdj": ["rainy", "windy", "old", "grey", "dark", "creaky", "quiet", "silent", "fair", "shadow", "verdant", "sunny", "far", "near", "dry", "dead"],
+			"landscapeFeature": ["river", "mountain", "forest", "mines", "pines", "falls", "glen", "garden", "mansion", "village", "isle", "bayou", "swamp", "hill", "creek", "rainforest", "desert"],
+			"landscapeComplex": ["#landscapeAdj# #landscapeFeature#"],
 
 			"flavorAdj": ["special", "dark", "light", "bitter", "burnt", "savory", "flavorful", "aromatic", "fermented", "herbal", "pleasant", "harsh", "smoky", "sweet", "fresh", "refreshing", "somber", "bright", "perky", "sullen", "acidic", "sour", "peaty", "juicy", "perfumed", "buttery", "lush", "brisk", "strong", "weak", "tart", "tangy", "bold", "overpowering", "light", "faint", "subtle", "bright", "zesty", "austere", "round", "big", "buttery", "oaky", "peaty", "seedy", "gritty", "creamy", "smooth", "rustic", "complex", "chewy", "sweet", "crisp", "dense", "bold", "elegant", "sassy", "opulent", "massive", "wide", "flamboyant", "fleshy", "approachable", "jammy", "juicy", "refined", "silky", "structured", "steely", "rich", "toasty", "burnt", "velvety", "unctuous", "oily"],
 
+			"flavorMod": ["special", "dark", "light", "bitter", "burnt", "savory", "flavorful", "aromatic", "fermented", "herbal", "pleasant", "harsh", "smoky", "sweet", "fresh", "refreshing", "somber", "bright", "perky", "sullen", "acidic", "sour", "peaty", "juicy", "perfumed", "buttery", "lush", "brisk", "strong", "weak", "tart", "tangy", "bold", "overpowering", "light", "faint", "subtle"],
+			"flavorWeird": ["tobacco", "agave", "sea salt", "kosher salt", "motor oil", "lavender", "spice", "black pepper", "bubblegum", "cardamom", "pumpkin spice", "caramel", "peppermint", "walnut", "acid", "pear", "citrus", "grenadine", "smoke", "iodine", "coriander", "cinnamon", "acid", "salt", "sugar", "maple", "coffee", "whiskey", "regret", "sorrow", "blood", "gasoline", "grass", "cigarettes", "pine", "tar", "saltwater", "rosewater", "jasmine", "espresso", "green apple"],
 
 			"toasted": ["toasted", "burnt", "singed", "fried"],
 			"cream": ["coconut milk<coconut><nut>", "whipped cream<dairy>", "almond milk<nut>", "hemp milk", "organic milk<dairy>", "soy", "fermented dairy", "yoghurt", "goat's milk"],
@@ -55,12 +217,12 @@ let localChanceries = {
 			"herb": ["fennel", "cilantro", "mint", "basil", "thyme", "Thai basil", "oregano", "peppermint", "spearmint", "rosemary"],
 			"spice": ["vanilla", "nutmeg", "allspice", "turmeric", "cardamom", "saffron", "cinnamon", "chili powder", "cayenne", "coriander", "black pepper", "white pepper", "ginger", "za’atar"],
 			"fruit": ["#smallFruit#", "#largeFruit#"],
-			"liquid": ["#fruit# jam", "caramel", "salted caramel", "soy sauce", "#fruit# wine", "maple syrup", "#fruit# syrup"],
-			"flavor": ["#largeFruit#", "#smallFruit#", "#herb#", "#spice#", "#liquid#", "#nut#"],
+			"liquid": ["#fruit# jam", "toffee", "butterscotch", "coffee", "whiskey", "port wine", "caramel", "salted caramel", "soy sauce", "#fruit# wine", "maple syrup", "#fruit# syrup"],
+			"flavor": ["#largeFruit#", "#smallFruit#", "#herb#", "#spice#", "#liquid#", "#nut#", "#flavorWeird#"],
 			"coffeeName": ["#hpn# #coffeeType.capitalizeAll#", "#landscapeComplex.capitalizeAll# #coffeeType.capitalizeAll#", "#name#'s #coffeeType.capitalizeAll#"],
 
 			// "coffeeDesc": ["#flavorAttr.capitalize#.  #coffeeServingInstruction#.", "#flavorAttr.capitalize# and #flavorAttr#.  #coffeeServingInstruction#.",
-			"coffeeDesc": "#flavorAdj# with hints of #flavor#"
+			"coffeeDesc": "#test##flavorAdj# with hints of #flavor#"
 		},
 
 		states: {

@@ -183,6 +183,17 @@ Pointer.prototype.getValue = function(obj) {
 			return this.getValue(obj.value);
 		case "traceryRule":
 			return obj.value
+		case "targetmacro":
+			switch (obj.value) {
+				case "@":
+					return this.state.id;
+				case "^":
+					return this.state.id; // TODO go to previous
+				case "&":
+					return this.state.id; // TODO go to ... something
+				default:
+					console.warn("Unknown target macro (should be @,^, or &)")
+			}
 		case "path":
 			let path = obj.sections.map(s => this.getValue(s));
 
@@ -259,12 +270,39 @@ Pointer.prototype.setAtPath = function(path, value) {
 	this.chancery.setAtPath(path, value);
 }
 
+Pointer.prototype.getBidInput = function(msg, bid) {
+	this.exitMap.forEach(exitWatcher => {
+
+		exitWatcher.conditionMap.forEach(cw => {
+			if (cw.condition.type === "say") {
+				let targetPhrase = bid.ptr.getValue(cw.condition);
+				let match = getMatchBid(this.grammarContext.grammar, targetPhrase, msg.msg);
+				if (match.bid > 0) {
+					cw.hasMatch = true;
+					cw.matchValue = match.bid
+				}
+			}
+		})
+	})
+	
+	this.setAtPath(["INPUT"], msg.msg)
+	this.setAtPath(["INPUT_SOURCE"], msg.from.id || msg.from)
+	this.setAtPath(["MATCH_0"], bid.matches[0])
+	this.setAtPath(["MATCH_1"], bid.matches[1])
+	this.setAtPath(["MATCH_2"], bid.matches[2])
+	this.setAtPath(["MATCH_3"], bid.matches[3])
+
+	// Check 
+	this.update();
+}
+
 Pointer.prototype.bidOnMessage = function(msg) {
 	// which exits could use this message?
 
 	let maxValue = 0;
 	let bestExit;
 	let conditionIndex;
+	let bestMatches;
 	this.exitMap.forEach((exit, exitIndex) => {
 		exit.currentBid = undefined
 		exit.conditionMap.forEach((conditionWatcher, condIndex) => {
@@ -274,17 +312,20 @@ Pointer.prototype.bidOnMessage = function(msg) {
 			if (c.type === "say") {
 
 				let rule = this.getValue(c);
-				console.log("RULE", rule, "MSG", msg.msg)
-				let value = getMatchBid(rule, msg.msg)
+				
+				let match = getMatchBid(this.grammarContext.grammar, rule, msg.msg)
+
+				let value = match.bid
 				// TODO modulate based on % fulfillment, "wait"ing exits are deprioritized
 
 				if (value > maxValue) {
 					maxValue = value
 					bestExit = exit;
-				}
-				conditionIndex = condIndex;
+					bestMatches = match.matches
+					conditionIndex = condIndex;
 
-				exit.currentBid = value;
+					exit.currentBid = value;
+				}
 			}
 		})
 
@@ -294,6 +335,7 @@ Pointer.prototype.bidOnMessage = function(msg) {
 		ptr: this,
 		value: maxValue,
 		exit: bestExit,
+		matches: bestMatches,
 		conditionIndex: conditionIndex
 	};
 }
@@ -308,25 +350,22 @@ Pointer.prototype.selectExit = function(exit) {
 
 
 Pointer.prototype.activateExit = function() {
-
 	this.do("activateExit", this.selectedExit);
 	this.chancery.do("activateExit", this);
 
 	// Get the value of the exit
 	let targetID = this.getValue(this.selectedExit.exit.target);
-
-
+	
 	// Do all the exit actions
 	this.selectedExit.exit.actions.forEach(action => {
 		switch (action.type) {
 			case "say":
 				// Generate something to say
 				let rule = this.getValue(action)
-				let msg = utilities.capitaliseFirstLetter(this.grammarContext.flatten(rule))
+				let msg = this.grammarContext.flatten(rule)
 				this.chancery.output(msg, true, this);
 				break;
 			case "expression":
-				console.log(action.raw);
 				// there should only be 2 or three
 				if (action.sections.length === 3) {
 					let op = action.sections[1].value;
@@ -337,13 +376,33 @@ Pointer.prototype.activateExit = function() {
 					let v1 = this.getValue(action.sections[2])
 
 					// Process any tracery strings
-					if(typeof v1 === "string") {
+					if (typeof v1 === "string") {
 						v1 = this.grammarContext.flatten(v1);
-						console.log(v1)
 					}
-					console.log(targetPath, v0, v1)
 					switch (op) {
-						case "=": break;
+						case "=":
+							this.setAtPath(targetPath, v1);
+							break;
+						case "+=":
+							this.setAtPath(targetPath, v0 + v1);
+							break;
+						case "-=":
+							this.setAtPath(targetPath, v0 - v1);
+							break;
+						case "*=":
+							this.setAtPath(targetPath, v0 * v1);
+							break;
+						case "/=":
+							this.setAtPath(targetPath, v0 / v1);
+							break;
+						case "%=":
+							this.setAtPath(targetPath, v0 % v1);
+							break;
+						case "^=":
+							this.setAtPath(targetPath, Math.pow(v0, v1));
+							break;
+						default:
+							console.warn("Unknown or unimplemented action operator:", op, action.raw)
 					}
 				} else if (action.sections.length === 2) {
 					let op = action.sections[1].value;
@@ -367,12 +426,3 @@ Pointer.prototype.activateExit = function() {
 
 Pointer.prototype.on = addEventHandler;
 Pointer.prototype.do = doEventHandlers;
-
-
-function getMatchBid(pattern, sample) {
-	let found = sample.toLowerCase().indexOf(pattern.toLowerCase())
-
-	if (found >= 0)
-		return pattern.length / sample.length;
-	return 0;
-}

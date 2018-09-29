@@ -45,6 +45,7 @@ function Chancery(baseMap) {
 	}
 	this.id = baseMap.id + this.idNumber;
 	this.title = baseMap.title;
+
 	this.baseMap = baseMap;
 	// Parse the map maybe
 	this.maps = [new Map(this, "main", baseMap)]
@@ -97,29 +98,14 @@ Chancery.prototype.output = function(msg, isMainVoice, ptr) {
 }
 
 Chancery.prototype.input = function(msg, bid) {
-	console.log(msg)
-	this.output("[" + this.title + "]: received '" + msg.msg + "'")
+	this.output("[" + this.id + "]: received '" + msg.msg + "'")
 
 
 	if (bid !== undefined) {
-		console.log(bid)
-		console.log(this.title + " won '" + msg.msg + "' for $" + bid.value)
-
+		
 		// Fulfill any exit condition of the pointer that won the bid
-		bid.ptr.exitMap.forEach(exitWatcher => {
-
-			exitWatcher.conditionMap.forEach(cw => {
-				if (cw.condition.type === "say") {
-					let targetPhrase = bid.ptr.getValue(cw.condition);
-					let bidVal = getMatchBid(targetPhrase, msg.msg)
-					console.log("MATCH VAL: " + bidVal)
-					if (bidVal > 0) {
-						cw.hasMatch = true;
-						cw.matchValue = bidVal
-					}
-				}
-			})
-		})
+		bid.ptr.getBidInput(msg, bid);
+		
 
 	} else {
 		console.log("non-bid msg:" + msg.msg)
@@ -164,6 +150,9 @@ function Map(chancery, id, rawMap) {
 	this.pointers = [];
 	this.chancery = chancery;
 
+
+
+
 	this.grammar = new TraceryGrammar(rawMap.grammar);
 
 }
@@ -182,7 +171,8 @@ Map.prototype.createPointer = function(id, startState) {
 	let p = new Pointer(id, this);
 
 	p.grammarContext = this.grammar.createContext({
-		blackboard: this.chancery.blackboard
+		blackboard: this.chancery.blackboard,
+		modifiers: this.chancery.baseMap.modifiers
 	});
 
 

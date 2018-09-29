@@ -102,19 +102,16 @@ ChannelChat.prototype.addBubble = function(line, data) {
 			if (useVoice) {
 				this.isBusy = true;
 				let voiceType = source.voice.voiceType || "UK English Male";
-				console.log("Voice type: " + voiceType)
 				row.addClass(side);
 				responsiveVoice.speak(line, voiceType, {
 					rate: 1.2,
 					onstart: () => {
 
-						console.log("start:" + line)
 					},
 					onend: () => {
 						// Finished talking
 						this.isBusy = false;
 						this.dequeueMsg();
-						console.log("end:" + line)
 					}
 				});
 			}
