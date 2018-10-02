@@ -1,5 +1,5 @@
 function expressionToDiv(holder, c, hasFill) {
-	let useLabel = !((c.type === "key") || (c.type === "traceryRule")  || (c.type === "targetmacro") || (c.type === "number"))
+	let useLabel = !((c.type === "key") || (c.type === "traceryRule") || (c.type === "path")  || (c.type === "targetmacro") || (c.type === "number"))
 	let div = holder;
 	if (useLabel) {
 		div = $("<div/>", {

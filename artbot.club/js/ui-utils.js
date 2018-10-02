@@ -1,3 +1,61 @@
+function ToggleFlag(settings) {
+	this.div = $("<div/>", {
+		class: "flagsquare " + (settings.classes ? settings.classes : ""),
+		id: settings.id
+	}).appendTo(settings.holder)
+
+	this.active = false || settings.defaultValue;
+
+	if (settings.onToggle) {
+		this.div.click(() => this.toggle())
+	}
+}
+
+ToggleFlag.prototype.set = function(val) {
+	if (this.active !== val) {
+		this.active = val;
+		this.active ? this.div.addClass("active") : this.div.removeClass("active")
+	}
+}
+
+ToggleFlag.prototype.toggle = function(val) {
+	this.active = !this.active;
+	this.active ? this.div.addClass("active") : this.div.removeClass("active")
+}
+
+function selectWidget(settings) {
+	// Create a dropdown 
+	let selectHolder = $("<div/>", {
+		html: settings.label,
+	}).appendTo(settings.holder).css({
+		display: "inline-block"
+	});
+
+	selectHolder.select = $("<select/>", {
+		html: settings.ids.map(id => {
+			let isSelected = ""
+			if (id === settings.default)
+				isSelected = ' selected="selected"'
+			return "<option value='" + id + "'" + isSelected + ">" + settings.getLabel(id) + "</option>"
+		})
+	}).appendTo(selectHolder).change(() => {
+		if (settings.onSelect)
+			settings.onSelect(selectHolder.select.val());
+	});
+
+
+	if (settings.onGo)
+		selectHolder.selectButton = $("<button/>", {
+			html: settings.goLabel
+		}).appendTo(selectHolder).click(() => {
+			settings.onGo(selectHolder.select.val());
+		});
+
+	return selectHolder;
+}
+
+
+
 function FillPill(holder, classes, html, hasFill) {
 	this.holder = $("<div/>", {
 		class: "fillpill " + classes
@@ -55,7 +113,7 @@ function createRow(settings) {
 			class: "subrow row"
 		}).appendTo(row)
 
-		
+
 		row.addClass("duplexrow")
 
 		mainRow = row.subrow;
@@ -71,6 +129,8 @@ function createRow(settings) {
 		class: "row-label",
 		html: settings.label
 	}).appendTo(mainRow)
+
+
 
 	row.content = $("<div/>", {
 		class: "row-content",
@@ -122,33 +182,40 @@ function createCard(settings) {
 		id: settings.id
 	}).appendTo(settings.holder)
 
-	div.header = $("<div>", {
-		class: "card-header",
+	div.reset = function() {
+		div.html("")
+		div.header = $("<div>", {
+			class: "card-header",
 
-	}).appendTo(div)
+		}).appendTo(div)
 
-	div.title = $("<div>", {
-		class: "card-title",
-		html: settings.title
-
-	}).appendTo(div.header)
-
-	if (settings.subtitle)
-		div.subtitle = $("<div>", {
-			class: "card-subtitle",
-			html: settings.subtitle
+		div.title = $("<div>", {
+			class: "card-title",
+			html: settings.title
 
 		}).appendTo(div.header)
 
-	div.controls = $("<div>", {
-		class: "card-controls",
+		if (settings.subtitle)
+			div.subtitle = $("<div>", {
+				class: "card-subtitle",
+				html: settings.subtitle
 
-	}).appendTo(div.header)
+			}).appendTo(div.header)
 
-	div.content = $("<div>", {
-		class: "card-content",
+		div.controls = $("<div>", {
+			class: "card-controls",
 
-	}).appendTo(div)
+		}).appendTo(div.header)
+
+		div.content = $("<div>", {
+			class: "card-content",
+
+		}).appendTo(div)
+	}
+
+	div.reset();
+
+
 	return div;
 
 }

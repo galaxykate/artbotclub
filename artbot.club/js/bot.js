@@ -2,9 +2,12 @@
 let botCount = 1;
 
 function Bot(chanceryTemplate) {
+	if (typeof chanceryTemplate !== "object") {
+		console.warn("Non-existent chanceryTemplate!", chanceryTemplate)
+		return;
+	}
+	
 	this.idNumber = botCount++;
-	this.id = "Bot" + this.idNumber;
-	this.idColor = new KColor(this.idNumber * .221, 1, .5);
 	this.type = "bot";
 	if (chanceryTemplate.voice)
 		this.voice = chanceryTemplate.voice
@@ -30,29 +33,7 @@ function Bot(chanceryTemplate) {
 		room.getMessage(msg);
 	})
 
-	this.id = this.chancery.id;
-
-	setTimeout(() => {
-		room.getMessage({
-			from: this.id,
-			useVoice: true,
-			msg: "hi, i am " + this.id
-		})
-
-		room.getMessage({
-			from: this.id,
-			isDebugOutput: true,
-			msg: "i'm playing '" + this.chancery.title + "'"
-		})
-
-	}, Math.random() * 100 + 1000)
-
-	setInterval(() => {
-		if (!paused) {
-
-			this.chancery.update()
-		}
-	}, 50);
+	this.id = this.chancery.id + "";
 
 
 
@@ -61,71 +42,39 @@ function Bot(chanceryTemplate) {
 
 
 Bot.prototype.start = function() {
+	room.getMessage({
+		from: this,
+		useVoice: true,
+		msg: "hi, i am " + this.id
+	})
+
+	room.getMessage({
+		from: this.id,
+		isDebugOutput: true,
+		msg: "i'm playing '" + this.chancery.title + "'"
+	})
+
 	this.chancery.start();
+
+	this.updateInterval = setInterval(() => {
+		if (!paused) {
+			this.chancery.update()
+		}
+	}, 50);
+
 }
 
-
-Bot.prototype.createControls = function(holder) {
-	// Dropdown for chanceries
-
-	let view = new ChanceryView(holder, this.chancery.baseMap)
-
-
-	// Pointer ui
-	// this.ptrHolder = createSection({
-	// 	holder: holder,
-	// 	title: "pointers:"
-	// })
-
-	// this.chancery.maps.forEach(map => {
-
-	// 	// create ptrs
-	// 	map.pointers.forEach((ptr) => {
-	// 		let ptrcontrol = new ChanceryPointerUI(this.ptrHolder.content, ptr)
-	// 	});
-
-	// });
-	// this.chancery.on("createPointer", (ptr) => {
-	// 	new ChanceryPointerUI(this.ptrHolder.content, ptr)
-	// });
+Bot.prototype.stop = function() {
+	clearInterval(this.updateInterval);
 }
+
 
 // Create the UI for this bot
-Bot.prototype.createUI = function(holder) {
-	let card = createCard({
-		title: this.getStyledID(),
-		classes: "chatparticipant-card"
-	});
+Bot.prototype.createUI = function(card) {
+	console.log("CREATE UI")
+	// Mini status bar
+	card.status = new ChanceryUIMini(card.content, this.chancery)
 
-	card.appendTo(holder)
-
-	let inputButton = ["talk", "move"].map(type => {
-		return $("<button/>", {
-			html: type
-		}).appendTo(card.controls).click(() => {
-			this.chancery.input({
-				msg: type
-			});
-		});
-	})
-
-
-
-	card.chancery = $("<div/>", {
-		class: "card-chancery"
-	}).appendTo(card.content);
-
-	this.ui = new ChanceryUI(card.chancery, this.chancery);
-
-	card.click(() => this.do("select"));
-
-	this.on("select", () => {
-		// Close all other cards
-		$(".card-detail").hide()
-		$(".chatparticipant-card").removeClass("card-selected")
-		card.addClass("card-selected")
-		card.find(".card-detail").show();
-	})
 }
 
 Bot.prototype.toString = function() {

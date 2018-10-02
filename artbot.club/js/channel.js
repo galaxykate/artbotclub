@@ -2,15 +2,6 @@
 // Each channel needs to implement: createUI(holder), getMessage(data), on(event, fxn)
 
 
-function createChannelCard(holder, type, id) {
-	return createCard({
-		holder: holder,
-		title: type + ": " + id,
-		classes: "channel-panel channel-" + type,
-		id: "channel-" + id
-	})
-}
-
 
 //============================================
 
@@ -20,12 +11,12 @@ function ChannelChat(id, room, data) {
 	this.lineDelay = 100;
 }
 
-ChannelChat.prototype.createUI = function(holder) {
-	this.ui = createChannelCard(holder, this.type, this.id)
+ChannelChat.prototype.createUI = function(card) {
 
-	this.ui.messages = $("<div/>", {
+
+	this.messages = $("<div/>", {
 		class: "chat-messageholder"
-	}).appendTo(this.ui.content)
+	}).appendTo(card.content)
 }
 
 
@@ -39,96 +30,97 @@ ChannelChat.prototype.doTask = function(task) {
 
 
 ChannelChat.prototype.addBubble = function(line, data) {
-	if (this.ui) {
-
-		
-
-		let source = data.from ? this.room.participants[data.from].p : undefined;
-		let target = data.to ? this.room.participants[data.to].p : undefined;
-		let useVoice = source && source.voice && data.useVoice;
-		let letterSpeed = (useVoice && source.voice.letterSpeed) ? source.voice.letterSpeed : this.letterSpeed;
-
-
-		// Create the row and the bubble
-		let row = $("<div>", {
-			class: "chat-row"
-		}).appendTo(this.ui.messages)
-		if (source)
-			sourceDiv = $("<div>").appendTo(row)
-		if (target) {
-			row.append("➜")
-			targetDiv = $("<div>").appendTo(row)
-		}
-		let bubble = $("<div>", {
-			class: "chat-bubble mini",
-		}).appendTo(row)
-
-		if (data.isDebugOutput) {
-			row.addClass("debug")
-		}
-
-		// increase the bubble size and scroll to the top
-		setTimeout(() => {
-			bubble.removeClass("mini")
-			this.ui.messages.scrollTop(this.ui.messages[0].scrollHeight - 90);
-
-		}, 10)
 
 
 
-		// Iterate through all the characters 
-		if (this.letterSpeed !== undefined) {
-			let letterIndex = 0;
-			let charTimer = setInterval(() => {
-				bubble.append(line[letterIndex])
-				letterIndex++;
-				if (letterIndex > line.length) {
-					clearInterval(charTimer);
-				}
-			}, this.letterSpeed)
-		} else {
-			bubble.html(line)
-		}
+	let source = data.from ? this.room.participants[data.from] : undefined;
+	let target = data.to ? this.room.participants[data.to] : undefined;
+	let useVoice = source && source.controller.voice && data.useVoice;
+	let voice = undefined;
+	if (useVoice) {
+		voice = source.controller.voice
+	}
+	let letterSpeed = (useVoice && voice.letterSpeed) ? voice.letterSpeed : this.letterSpeed;
 
 
 
-		if (source) {
-			let side = source.side || "left"
-			if (source.isBot) {
-				side = "right"
-			}
+	// Create the row and the bubble
+	let row = $("<div>", {
+		class: "chat-row"
+	}).appendTo(this.messages)
+	if (source)
+		sourceDiv = $("<div>").appendTo(row)
+	if (target) {
+		row.append("➜")
+		targetDiv = $("<div>").appendTo(row)
+	}
+	let bubble = $("<div>", {
+		class: "chat-bubble mini",
+	}).appendTo(row)
 
-			// Speak in the sources voice
-			if (useVoice) {
-				this.isBusy = true;
-				let voiceType = source.voice.voiceType || "UK English Male";
-				row.addClass(side);
-				responsiveVoice.speak(line, voiceType, {
-					rate: 1.2,
-					onstart: () => {
-
-					},
-					onend: () => {
-						// Finished talking
-						this.isBusy = false;
-						this.dequeueMsg();
-					}
-				});
-			}
-
-
-			room.setToChiclet(sourceDiv, source)
-
-		} else {
-			row.addClass("center")
-		}
-
-		if (target) {
-			room.setToChiclet(targetDiv, target)
-		}
-
+	if (data.isDebugOutput) {
+		row.addClass("debug")
 	}
 
+	// increase the bubble size and scroll to the top
+	setTimeout(() => {
+		bubble.removeClass("mini")
+		this.messages.scrollTop(this.messages[0].scrollHeight - 90);
+
+	}, 10)
+
+
+
+	// Iterate through all the characters 
+	if (this.letterSpeed !== undefined) {
+		let letterIndex = 0;
+		let charTimer = setInterval(() => {
+			bubble.append(line[letterIndex])
+			letterIndex++;
+			if (letterIndex > line.length) {
+				clearInterval(charTimer);
+			}
+		}, this.letterSpeed)
+	} else {
+		bubble.html(line)
+	}
+
+
+
+	if (source) {
+		let side = source.side || "left"
+		if (source.isBot) {
+			side = "right"
+		}
+
+		// Speak in the sources voice
+		if (useVoice) {
+			this.isBusy = true;
+			let voiceType = voice.voiceType || "UK English Male";
+			row.addClass(side);
+			responsiveVoice.speak(line, voiceType, {
+				rate: 1.2,
+				onstart: () => {
+
+				},
+				onend: () => {
+					// Finished talking
+					this.isBusy = false;
+					this.dequeueMsg();
+				}
+			});
+		}
+
+
+		setToChiclet(sourceDiv, source)
+
+	} else {
+		row.addClass("center")
+	}
+
+	if (target) {
+		setToChiclet(targetDiv, target)
+	}
 
 }
 
@@ -139,16 +131,6 @@ function ChannelBlackboard(id, room, data) {}
 
 function ChannelHTML(id, room, data) {}
 
-function ChannelControl(id, room, data) {
-	this.init(id, room, data);
-}
-
-ChannelControl.prototype.createUI = function(holder) {
-
-	this.ui = createChannelCard(holder, this.type, this.id)
-	this.ui.addClass("channel-control-" + this.data.target.type)
-	this.data.target.createControls(this.ui.content);
-}
 
 //=============================
 
@@ -158,10 +140,10 @@ function ChannelCanvas(id, room, data) {
 
 
 
-ChannelCanvas.prototype.createUI = function(holder) {
-	this.ui = createChannelCard(holder, this.type, this.id)
+ChannelCanvas.prototype.createUI = function(card) {
 
-	utilities.createProcessing(this.ui.content, (t, g) => {
+
+	utilities.createProcessing(card.content, (t, g) => {
 
 	}, (g) => {
 
@@ -214,9 +196,6 @@ ChannelCanvas.prototype.doTask = function(task) {
 
 
 const channelTypePrototypes = {
-	blackboard: ChannelBlackboard,
-	chancery: ChannelChancery,
-	control: ChannelControl,
 	canvas: ChannelCanvas,
 	html: ChannelHTML,
 	chat: ChannelChat,

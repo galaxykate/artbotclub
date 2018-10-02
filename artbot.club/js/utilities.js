@@ -2163,6 +2163,18 @@ function shallowCopyObj(obj) {
 	return obj2
 }
 
+function mapArrayToObj(arr, keyFxn, valFxn) {
+	let obj2 = {}
+	for (var i = 0; i < arr.length; i++) {
+		let val = arr[i];
+
+		let key = keyFxn(val, i);
+		obj2[key] = valFxn(val, i);
+
+
+	}
+	return obj2
+}
 
 function mapObject(obj, fxn) {
 	let obj2 = {}
@@ -2251,24 +2263,6 @@ function limitVectorMagnitude(v, max, falloff) {
 	return v;
 }
 
-function selectWidget(settings) {
-	// Create a dropdown 
-	let selectHolder = $("<div/>", {
-		html: settings.label,
-	}).appendTo(settings.holder);
-
-	selectHolder.select = $("<select/>", {
-		html: settings.ids.map(id => "<option value='" + id + "'>" + settings.getLabel(id) + "</option>")
-	}).appendTo(selectHolder);
-
-	selectHolder.selectButton = $("<button/>", {
-		html: settings.goLabel
-	}).appendTo(selectHolder).click(() => {
-		settings.onSelect(selectHolder.select.val());
-	});
-
-	return selectHolder;
-}
 
 //http://jsfromhell.com/array/shuffle
 function shuffle(a) {
@@ -2283,12 +2277,12 @@ function shuffle(a) {
 
 
 function isVowel(c) {
-    var c2 = c.toLowerCase();
-    return (c2 === 'a') || (c2 === 'e') || (c2 === 'i') || (c2 === 'o') || (c2 === 'u');
+	var c2 = c.toLowerCase();
+	return (c2 === 'a') || (c2 === 'e') || (c2 === 'i') || (c2 === 'o') || (c2 === 'u');
 };
 
 function isAlphaNum(c) {
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
 };
 
 
@@ -2301,15 +2295,16 @@ function toCamelCase(str) {
 	});
 }
 
+
 //returns an value for an int or float, but undefined for anything else	
 // -1.23 => -1.23
 // -1.2x => undefined
 const toStrictNumberIsInt = /^[+-]?\d+$/;
-const toStrictNumberIsFloat = /^[-+]?[0-9]*\.?[0-9]+.$/;
+const toStrictNumberIsFloat = /^[-+]?[0-9]*\.?[0-9]+$/;
 
 function toStrictNumber(val) {
 	if (toStrictNumberIsInt.test(val))
 		return parseInt(val)
-	if (toStrictNumberIsFloat.test(val))
+	if (toStrictNumberIsFloat.test(val)) 
 		return parseFloat(val)
 }

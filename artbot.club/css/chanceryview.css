@@ -51,8 +51,9 @@
 	flex-direction: column;
 }
 
-.row .row-label {
+.chancery-exitstatus .row-label {
 font-size: 50%;
+width: 100px;
 	}
 
 
@@ -183,6 +184,14 @@ font-size: 80%;
 	background-color: hsla(220, 90%, 99%, 1);
 		
 }
+
+.chancery-actionvalue {
+	font-size: 80%;
+	color: rgba(0, 0, 0, .7);
+	background-color: rgba(0, 0, 0, .2);
+	padding: 2px 3px;
+	margin: 2px;
+}
 .chancery-action .chancery-exp-say {
 	
 		border-radius: 20px 0px 20px 20px;
@@ -246,7 +255,22 @@ font-size: 80%;
 }
 
 
+.chancery-exititem {
+	margin: 2px;
+}
 
+.chancery-ptrstate {
+	font-size: 14px;
+	background-color: hsla(50, 100%, 60%, .4);
+}
+
+.chancery-status {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	background-color: hsla(50, 100%, 60%, .4);
+	margin: 3px;
+}
 
 .chancery-exp-wait {
 	border-radius: 20px;
@@ -267,8 +291,22 @@ font-size: 80%;
 	box-shadow: inset 0px 0px 1px 4px hsla(50, 90%, 60%, 1), 0px 0px 9px 2px hsla(50, 90%, 70%, 1);
 }
 
+
+
+
+
 .chancery-exit {
 	transition: all .3s;
+	background-color: hsla(40, 100%, 96%, 1);
+}
+.chancery-exitopen {
+	background-color: hsla(40, 100%, 60%, .4);
+}
+
+
+.chancery-exitselected {
+	background-color: hsla(34, 99%, 60%, 1);
+	box-shadow: inset 0px 0px 1px 1px hsla(20, 90%, 80%, 1), 0px 0px 0px 2px hsla(30, 90%, 70%, 1);
 }
 
 
@@ -278,9 +316,7 @@ font-size: 80%;
 	margin: 2px;
 	background-color: hsla(150, 50%, 50%, .2);
 }
-.chancery-exitopen {
-	background-color: hsla(220, 100%, 56%, .4);
-}
+
 
 .chancery-exitconditions {
 	position: relative;

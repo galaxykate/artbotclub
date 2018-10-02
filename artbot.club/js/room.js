@@ -1,17 +1,24 @@
 const defaultChatID = "DEFAULT_CHAT"
+let participantCount = Math.floor(Math.random());
+
 // A place for bots and humans to chat
 // Comes with a default
-function Room(chanceryTemplates) {
+// Participants: each particpan
+function Room() {
 
 	this.participants = {}
 	this.channels = {}
-	this.columns = [];
 
 
-	this.isHeadless = true;
-
-	//this.createChannel("canvas", 2, "drawing", {});
+	this.createChannel("canvas", 2, "drawing", {});
 	this.createChannel("chat", 2, defaultChatID, {});
+
+
+}
+
+Room.prototype.start = function(chanceryTemplates) {
+
+	// Create a human
 	this.createParticipant();
 
 	if (chanceryTemplates)
@@ -20,117 +27,44 @@ function Room(chanceryTemplates) {
 			this.createParticipant(template);
 
 		})
-
 }
 
-Room.prototype.setToChiclet = function(div, participant) {
-	// Make this div
-	div.addClass("chiclet");
-	div.html(participant.id)
-	div.css({
-		color: participant.idColor.toCSS(-.4),
-		backgroundColor: participant.idColor.toCSS(.4)
-	})
-
-}
-
-Room.prototype.createUI = function(holder) {
-
-	this.isHeadless = false;
-	this.columnCount = 3;
-	let columnHolder = $("<div/>", {
-		class: "column-holder"
-	}).appendTo(holder);
-	for (var i = 0; i < this.columnCount; i++) {
-		this.columns[i] = $("<div/>", {
-			class: "column"
-		}).appendTo(columnHolder)
+Room.prototype.createParticipant = function(chanceryTemplate, replacing) {
+	if (replacing) {
+		delete this.participants[replacing.id]
 	}
-
-	// Create the controlUI 
-	this.controlCard = createChannelCard(this.columns[0], "roomcontrols", "roomcontrols");
-
-	this.addParticipantControl = selectWidget({
-		holder: this.controlCard.content,
-		label: "add:",
-		goLabel: "+",
-		ids: ["human"].concat(availableChanceries.map(s => s.id)),
-		onSelect: (id) => {
-			this.createParticipant(id);
-		},
-		getLabel: (id) => {
-			if (testChanceries[id])
-				return testChanceries[id].title
-			return id
-		}
-	});
-
-	this.participantsHolder = $("<div/>", {
-
-	}).appendTo(this.controlCard.content);
-	this.participantsUI = {
-
-	}
-	this.refreshParticipantUI();
-
-	this.forChannels((key, channel) => {
-
-		channel.createUI(this.columns[channel.uiColumn])
-	})
-}
-
-Room.prototype.createParticipant = function(chanceryTemplate) {
+	let controller;
 	if (chanceryTemplate === undefined) {
 		// create a human
-		let p = new Human();
-		this.enter(p)
+		controller = new Human();
 	} else {
-		let p = new Bot(chanceryTemplate);
-		this.enter(p)
-		p.start();
+		controller = new Bot(chanceryTemplate);
+
 	}
 
+	let pseudonym = controller.id;
+	this.participants[pseudonym] = {
+		controller: controller,
+		id: pseudonym,
+		tags: [controller.type],
+		idNumber: participantCount++,
+		idColor: new KColor((participantCount * 3.92) % 1, 1, .5 + .2 * Math.sin((participantCount * 3.92)))
+	}
+
+	controller.start();
+
+	this.do("addParticipant", this.participants[pseudonym], pseudonym, replacing)
+	return this.participants[pseudonym];
 }
 
 
-
-Room.prototype.refreshParticipantUI = function() {
-	if (this.participantsUI) {
-		// Does each participant have a section?
-		forKeyIntersection(this.participants, this.participantsUI,
-			(key) => {
-				// no ui yet
-				let p = this.participants[key].p
-
-				let row = createRow({
-					holder: this.participantsHolder,
-					label: p.id
-				})
-
-				row.activity = $("<div/>", {
-					class: "activity",
-				}).appendTo(row.content)
-
-				row.deleteButton = $("<button/>", {
-					html: "🗑",
-
-				}).appendTo(row.controls).click(() => {
-					this.exit(p);
-				})
-
-				if (p.chancery)
-					row.activity.html("(" + p.chancery.title + ")")
-
-				this.participantsUI[key] = row;
-
-			}, (key) => {
-				// has ui, ignore
-			}, (key) => {
-				//  ui but should be removed
-				this.participantsUI[key].remove();
-			})
-	}
+Room.prototype.removeParticipant = function(p) {
+	if (p.controller.stop)
+		p.controller.stop();
+	delete this.participants[p.id]
 }
+
+
 
 // Create a new panel of a type
 // types: 
@@ -145,18 +79,9 @@ Room.prototype.refreshParticipantUI = function() {
 
 
 Room.prototype.createChannel = function(type, column, id, data) {
-	//console.log("create channel", type, column, id)
 	let channel = new channelTypePrototypes[type](id, this, data);
-	channel.uiColumn = column;
-	// Do a UI?
-	if (!this.isHeadless) {
-		//console.log("not=headless, create ui")
-		channel.createUI(this.columns[channel.uiColumn])
-	} else {
-		//console.log("create headless channel")
-	}
-
 	this.channels[id] = channel;
+	this.do("addChannel", channel, id)
 }
 
 Room.prototype.filterChannels = function(fxn) {
@@ -173,88 +98,87 @@ Room.prototype.forChannels = function(fxn) {
 }
 
 
-Room.prototype.enter = function(participant) {
-	// this.createPanel("", 0, participant.id, {
-	// 	participant: participant
-	// })
 
-	let column = 0;
-	if (participant.type === "bot")
-		column = participant.idNumber % 2;
-	//console.log("ENTER: ", participant)
-	this.participants[participant.id] = {
-		p: participant,
-		id: participant.id, // Can be a pseudonym
-		controlPanel: this.createChannel("control", column, participant.id + "-control", {
-			target: participant
-		}),
-	}
-	this.refreshParticipantUI();
-
-}
-
-
-Room.prototype.exit = function(participant) {
-
-	delete this.participants[participant.id];
-	this.refreshParticipantUI();
+Room.prototype.exit = function(id) {
+	delete this.participants[id];
+	this.do("removeParticipant", participant)
 }
 
 Room.prototype.getMessage = function(msg) {
-	// use the named channel if provided
+	if (typeof msg.from === "object") {
 
+		let p = filterObjectToArray(this.participants, p => (p.controller === msg.from))
+		console.log("FOUND MSG recipient", p)
+		if (p.length === 0) {
+			console.log(this.participants, msg.from)
+		}
+		msg.from = p[0].id;
+	}
+
+
+	// use the named channel if provided
 	let channels = [this.channels[msg.channel]];
 
 	// Fallback, use the default chat, or default of each type
 	if (msg.channel === undefined) {
 		if (msg.channelType === undefined) {
 			// No channel type, assume ... chat?
-
 			channels = [this.channels[defaultChatID]]
 		} else {
 			// broadcast on all channels of this type? or just the default?
 			channels = this.filterChannels((id, c) => {
-
 				return c.type === msg.channelType;
 			})
 		}
 	}
-
-
 
 	// Route this message to the appropriate channels (and their listeners)
 	channels.forEach(c => {
 		c.getMessage(msg);
 	})
 
+	//-----------------------------------------------------------
+	// Send the message to the recipient
+
+	let targetPartipants = mapObjectToArray(this.participants.obj, s => s)
+
 	// Filter out anyone who sent this message
-	let targetPartipants = filterObjectToArray(this.participants, (p, key) => {
-		return msg.from !== p && msg.from !== p.id
-	});
+	if (msg.from !== undefined) {
+		if (typeof msg.from === "string") {
+			targetPartipants = filterObjectToArray(this.participants, (p, key) => {
+				return msg.from !== p.id
+			});
+		} else {
+			console.warn("MSG has a non-string from-address!", msg)
+		}
+	}
 
 	// Also send this to the target participants
 	if (msg.to !== undefined) {
-		let target = msg.to;
-
-		if (typeof target === "string") {
-			// Assume ID for the moment,
-			// TODO but filter according to class, conditional etc eventually
-			targetPartipants = filterObjectToArray(this.participants, (p, key) => {
-				return p.id === target;
-			})
+		if (typeof msg.to === "string") {
+			targetPartipants.filter(p => matchesSelector(msg.to, p));
 		} else {
-			targetPartipants = [msg.target];
+			console.warn("MSG has a non-string addressee!", msg)
 		}
-
-
-
 	}
 
 	// Hold an auction for this message
 	if (msg.respondable) {
-		console.log("\nAuction for msg: " + msgToString(msg))
+		//console.log("\nAuction for msg: " + msgToString(msg))
 		// If the message is not multi-use, have everyone bid on it
-		let bids = targetPartipants.map(p => p.p.bidOnMessage(msg));
+		let bids = targetPartipants.map(p => {
+			let v = 0;
+			if (p.controller.bidOnMessage) {
+				let bid = p.controller.bidOnMessage(msg)
+				bid.participant = p;
+				return bid;
+			}
+			return {
+				participant: p,
+				value: 0
+			}
+
+		});
 
 		// Sort by highest bid
 		bids.sort(function(a, b) {
@@ -264,11 +188,9 @@ Room.prototype.getMessage = function(msg) {
 		// remove non-zero bids
 		bids = bids.filter(bid => bid.value !== 0)
 
-
-
 		// Distribute the message to any participants
 		bids.forEach((bid, index) => {
-			console.log(" - " + bid.p.id + "(" + bid.ptr.id  + ") bid: " + bid.value)
+			//console.log(" - " + bid.p.id + "(" + bid.ptr.id + ") bid: " + bid.value)
 			bid.isWinner = (index === 0)
 			// Was this actually a bid?
 			if (bid.p) {
@@ -276,17 +198,30 @@ Room.prototype.getMessage = function(msg) {
 			}
 		});
 		if (bids.length === 0) {
-			console.log("   ... no-one bids on " + msgToString(msg))
+			//console.log("   ... no-one bids on " + msgToString(msg))
 		}
 	}
 }
 
+function matchesSelector(selector, candidate) {
+	// Select by class
+	if (selector.startsWith(".")) {
+		return candidate.tags && candidate.tags.indexOf(select.substring(1));
+	}
+	// Select by id
+	return candidate.id === selector
+}
+Room.prototype.on = addEventHandler;
+Room.prototype.do = doEventHandlers;
+
+
+//=========
 function msgToString(msg) {
 	let s = '"' + msg.msg + '"'
 	if (msg.from)
 		s += " from " + (msg.from.id || msg.from)
 	if (msg.to)
-		s += " to " +(msg.to.id || msg.to)
+		s += " to " + (msg.to.id || msg.to)
 	return s;
 }
 

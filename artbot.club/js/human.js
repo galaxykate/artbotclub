@@ -7,16 +7,7 @@ function Human() {
 	this.type = "human";
 
 	this.id = "Human" + this.idNumber;
-	this.idColor = new KColor(Math.random(), .5, .9);
-	this.hue = Math.random();
 
-	setTimeout(() => {
-		room.getMessage({
-			from: this.id,
-			msg: "hi, i am " + this.id + "\ni'm a human"
-		})
-
-	}, Math.random() * 100 + 1000)
 
 	setInterval(() => {
 		if (!paused) {
@@ -34,14 +25,34 @@ function Human() {
 }
 
 
-Human.prototype.createControls = function(holder) {
-	// Say stuff
-let human = this;
+Human.prototype.start = function() {
+	setTimeout(() => {
+		room.getMessage({
+			from: this,
+			msg: "hi, i am " + this.id + "\ni'm a human"
+		})
 
-	let chat = $("<input/>").appendTo(holder).val("the #color# #animal# went to #place#").keyup((e) => {
+	}, Math.random() * 100 + 1000)
+}
+
+
+Human.prototype.bidOnMessage = function(msg) {
+	return {
+		value: 0
+	};
+}
+
+
+Human.prototype.createUI = function(card) {
+
+	// Say stuff
+	let human = this;
+
+	let chat = $("<input/>").appendTo(card.content).val("the #color# #animal# went to #place#").keyup((e) => {
 		var code = (e.keyCode ? e.keyCode : e.which);
 		if (code == 13) { //Enter keycode
 			sendMsg();
+			chat.val("")
 		}
 	})
 
@@ -56,7 +67,7 @@ let human = this;
 
 	// Send a message via chat
 	let to = selectWidget({
-		holder: holder,
+		holder: card.content,
 		label: "to:",
 		ids: [everyoneLabel].concat(Object.keys(room.participants)),
 		onSelect: (id) => {
@@ -82,22 +93,6 @@ let human = this;
 	}
 
 	// Drawing tools
-}
-
-
-Human.prototype.bidOnMessage = function(msg) {
-	return {
-		value: 0
-	};
-}
-
-
-Human.prototype.createUI = function(holder) {
-	let card = createCard({
-		title: this.getStyledID()
-	});
-
-	card.appendTo(holder)
 }
 
 Human.prototype.toString = function() {

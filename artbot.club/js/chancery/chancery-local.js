@@ -99,6 +99,25 @@ let hpn = {
 
 }
 let localChanceries = {
+	test: {
+		states: {
+			origin: {
+				onEnterSay: "hello",
+				onEnter: "x=5",
+				exits: ["->s0"]
+			},
+			s0: {
+				onEnterSay: "State0",
+				onEnter: "'#/x#'",
+				exits: ["x<4 ->s1", 
+				"->s0 x-=1 'reduced:#/x#'"]
+			},
+			s1: {
+				onEnter: "'#/x#' y+=1 '#/f#'",
+			}
+		}
+	},
+
 	// test: {
 	// 	id: "test",
 	// 	title: "test-bot",
@@ -140,7 +159,7 @@ let localChanceries = {
 	letterbot: {
 		id: "letterbot",
 		title: "Letter-writing bot",
-		
+
 		grammar: {
 			animal: ["cat", "dog", "lemur", "alpaca", "corgi", "zebra", "leopard", "cougar", "cobra", "unicorn", "dragon", "llama", "hamster", "elephant"],
 
@@ -160,6 +179,9 @@ let localChanceries = {
 
 		}
 	},
+
+
+
 	buzzbot: {
 		grammar: {
 			vowel: "aeiou".split(""),
@@ -183,6 +205,10 @@ let localChanceries = {
 	},
 
 	coffee: {
+		voice: {
+			letterSpeed: 3,
+			voiceType: "UK English Female"
+		},
 		id: "coffee",
 		title: "coffeebot",
 		modifiers: basicMods,
@@ -222,7 +248,7 @@ let localChanceries = {
 			"coffeeName": ["#hpn# #coffeeType.capitalizeAll#", "#landscapeComplex.capitalizeAll# #coffeeType.capitalizeAll#", "#name#'s #coffeeType.capitalizeAll#"],
 
 			// "coffeeDesc": ["#flavorAttr.capitalize#.  #coffeeServingInstruction#.", "#flavorAttr.capitalize# and #flavorAttr#.  #coffeeServingInstruction#.",
-			"coffeeDesc": "#test##flavorAdj# with hints of #flavor#"
+			"coffeeDesc": "#flavorAdj# with hints of #flavor#"
 		},
 
 		states: {
@@ -230,18 +256,24 @@ let localChanceries = {
 				onEnterSay: "I\\'m a sentient coffeepot.\nAsk me for \\'coffee\\'\nor \\'tea\\'",
 				exits: ["'tea' ->brewing drinkname='#teaName#' drinkdesc='#teaDesc#' 'making #/drinkname# \n#/drinkdesc#'",
 					"'coffee' ->brewing drinkname='#coffeeName#' drinkdesc='#coffeeDesc#' 'making #/drinkname# \n#/drinkdesc#'",
-					"wait:1 ->brewing drinkname='#coffeeName#' drinkdesc='#coffeeDesc#' 'no input...making #/drinkname#'"
+					"wait:15 ->brewing drinkname='#coffeeName#' drinkdesc='#coffeeDesc#' 'no input...making #/drinkname#'"
 				]
 			},
 
 			brewing: {
 				onEnter: "'brewing #/drinkname#'",
-				exits: ["wait:1 ->brewed"],
+				exits: ["wait:1 ->finishedBrewing"],
+			},
+			finishedBrewing: {
+				onEnter: "'#/drinkname# is brewed' cups=5",
+				exits: ["->brewed"],
 			},
 			brewed: {
-				onEnter: "'#/drinkname# is brewed'",
-				exits: ["wait:1 ->origin '#/drinkname# is stale, discarding it.'",
-					"'cup' ->@ 'pouring #/drinkname# for #/INPUT_SOURCE#... \n ☕️'"
+				onEnter: "'#/cups# remaining'",
+				exits: [
+					"cups==0 ->origin 'out of coffee!'",
+					"wait:15 ->origin '#/drinkname# is stale, discarding it.'",
+					"'cup' ->@ 'pouring #/drinkname# for #/INPUT_SOURCE#... \n ☕️' 'it tastes #flavorMod#' cups-=1"
 				],
 			}
 		},

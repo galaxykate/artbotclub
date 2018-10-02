@@ -3,7 +3,11 @@
 let chanceryCount = 0;
 
 let tuning = {
-	exitDelay: 1200
+	minimumStageTime: 100,
+	exitDelay: 100,
+	actionDelay: 100,
+	exitStageNames: ["selected", "entered", "cooldown"],
+	requireUserActionToExit: false,
 }
 
 function Blackboard() {
@@ -25,13 +29,12 @@ Blackboard.prototype.getAtPath = function(path) {
 }
 
 Blackboard.prototype.setAtPath = function(path, val) {
-	console.log("BB: set at path", path, val)
 	this.bb[path[0]] = val;
 }
 
-function Chancery(baseMap) {
+function Chancery(template) {
 
-	baseMap = parseChanceryMap(baseMap);
+	this.template = parseChanceryMap(template);
 
 	this.idNumber = chanceryCount++;
 	this.time = {
@@ -40,27 +43,25 @@ function Chancery(baseMap) {
 		current: 0,
 		updateCount: 0
 	}
-	if (baseMap.id === undefined) {
-		console.warn("no id in base map");
+	if (this.template.id === undefined) {
+		console.warn("no id in template");
 	}
-	this.id = baseMap.id + this.idNumber;
-	this.title = baseMap.title;
+	this.id = this.template.id + this.idNumber;
+	this.title = this.template.title;
 
-	this.baseMap = baseMap;
+
 	// Parse the map maybe
-	this.maps = [new Map(this, "main", baseMap)]
+	this.maps = [new Map(this, "main", this.template)]
 	this.blackboard = new Blackboard();
 
 }
 
 Chancery.prototype.start = function() {
+	console.log("START CHANCERY", this.title)
 
 	this.maps.forEach(map => {
 		map.createPointer("c" + this.idNumber + "-main");
 	});
-
-
-
 }
 
 Chancery.prototype.getAtPath = function(path) {
@@ -102,10 +103,10 @@ Chancery.prototype.input = function(msg, bid) {
 
 
 	if (bid !== undefined) {
-		
+
 		// Fulfill any exit condition of the pointer that won the bid
 		bid.ptr.getBidInput(msg, bid);
-		
+
 
 	} else {
 		console.log("non-bid msg:" + msg.msg)
@@ -150,14 +151,35 @@ function Map(chancery, id, rawMap) {
 	this.pointers = [];
 	this.chancery = chancery;
 
-
+	this.filters = {}
 
 
 	this.grammar = new TraceryGrammar(rawMap.grammar);
 
 }
 
-
+Map.prototype.getExitActions = function(tags) {
+	// Get the actions for entering this set of tags
+	let actions = []
+	for (var i = 0; i < tags.length; i++) {
+		let filter = this.filters[tag[i]]
+		if (filter) {
+			actions = actions.concat(filter.onExit);
+		}
+	}
+	return actions
+}
+Map.prototype.getEnterActions = function(tags) {
+	// Get the actions for entering this set of tags
+	let actions = []
+	for (var i = 0; i < tags.length; i++) {
+		let filter = this.filters[tag[i]]
+		if (filter) {
+			actions = actions.concat(filter.onEnter);
+		}
+	}
+	return actions
+}
 
 Map.prototype.update = function() {
 
@@ -172,13 +194,30 @@ Map.prototype.createPointer = function(id, startState) {
 
 	p.grammarContext = this.grammar.createContext({
 		blackboard: this.chancery.blackboard,
-		modifiers: this.chancery.baseMap.modifiers
+		modifiers: this.chancery.template.modifiers
 	});
 
 
 	this.pointers.push(p);
 	this.chancery.do("createPointer", p)
-	p.enterState(startState);
+}
 
 
+function getSelectorMatches(selector, array) {
+	// TAGS
+	if (selector.startsWith(".")) {
+		let tags = selector.split(".").slice(1);
+		return array.filter((s) => {
+			if (s.tags === undefined)
+				return false;
+			for (var i = 0; i < tags.length; i++) {
+				if (s.tags.indexOf(tags[i]) < 0)
+					return false;
+			}
+			return true;
+		})
+	}
+
+	// ID
+	return array.filter((s) => s.id === selector)
 }

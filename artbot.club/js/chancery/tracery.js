@@ -45,12 +45,32 @@ function parseAction(s) {
 }
 
 function parseRule(s) {
+	if (s === undefined)
+		console.warn("Undefined rule, can't parse");
+	if (typeof s !== "string") {
+		if (typeof s === "number") return {
+			type: "number",
+			raw: s,
+			textValue: String(s),
+			traceryRuleID: ruleCount++,
+			value: s,
+		}
+		if (typeof s === "boolean") return {
+			type: "boolean",
+			raw: s,
+			textValue: String(s),
+			value: s,
+		}
+		console.warn("parse strange rule:", s);
+
+	}
+
 	let sections = splitIntoProtectedSections(chanceryProtection, "traceryRule", s)
 
 	return {
 		type: "rule",
 		raw: s,
-		idNumber: ruleCount++,
+		traceryRuleID: ruleCount++,
 		sections: sections.map(section => {
 
 			switch (section.char) {
@@ -85,9 +105,19 @@ function TraceryGrammar(rawGrammar) {
 	});
 }
 
+TraceryGrammar.prototype.setRules = function(key, rules) {
+	if (!Array.isArray(rules))
+		rules = [rules];
+	this.symbols[key] = rules.map((rule) => parseRule(rule));
+}
+
 TraceryGrammar.prototype.flatten = function(rule, context) {
 	let node = this.expand(rule, context);
-	return node.finished
+
+	// Remove escape characters
+	let finished = node.finished.replace(/(?<!\\)(?:((\\\\)*)\\)(?![\\/{])/g, "")
+
+	return finished
 }
 
 
@@ -97,7 +127,7 @@ TraceryGrammar.prototype.expand = function(rule, context) {
 		context = this.createContext(this);
 	}
 
-	if (!rule.idNumber)
+	if (!rule.traceryRuleID)
 		rule = parseRule(rule);
 
 	// Create a root node
@@ -141,12 +171,15 @@ TraceryContext.prototype.getRuleSet = function(key, node) {
 
 		if (this.blackboard) {
 			let rules = this.blackboard.getAtPath(path)
-			if (typeof rules === "string")
-				return [rules]
+			
 			if (rules === undefined) {
 				console.warn("No rules found for path", path)
-				return "{{" + path.join("/") + "}}"
+				return ["{{" + path.join("/") + "}}"]
 			}
+
+			if (!Array.isArray(rules))
+				rules = [rules]
+
 
 			return rules;
 
@@ -163,12 +196,13 @@ TraceryContext.prototype.getRuleSet = function(key, node) {
 
 // Do fancy stuff like conditionals, shuffling, suppression
 TraceryContext.prototype.getRule = function(ruleset, node) {
-	let rule;
-	if (typeof ruleset === "string")
-		rule = ruleset
-	else rule = getRandom(ruleset);
 
-	return rule;
+	if (Array.isArray(ruleset))
+		return getRandom(ruleset);
+
+	console.log("RULE:" + rule)
+	// Just return this rule
+	return ruleset;
 }
 
 function TraceryNode(template) {
@@ -181,6 +215,7 @@ function TraceryNode(template) {
 TraceryNode.prototype.expand = function(context) {
 
 	switch (this.type) {
+
 		case "rule":
 			this.sections = this.template.sections.map(s => {
 				return new TraceryNode(s);
@@ -194,13 +229,15 @@ TraceryNode.prototype.expand = function(context) {
 		case "tag":
 			this.key = this.template.target.value; // TODO dynamic key
 			this.ruleSet = context.getRuleSet(this.key);
-
 			this.selectedRule = context.getRule(this.ruleSet, this);
 
+
 			// Process an unprocessed rule
-			if (typeof this.selectedRule === "string") {
+			if (this.selectedRule.traceryRuleID === undefined) {
+
 				this.selectedRule = parseRule(this.selectedRule);
 			}
+
 			this.subnode = new TraceryNode(this.selectedRule);
 			this.subnode.expand(context);
 			this.finished = this.subnode.finished;
@@ -221,6 +258,13 @@ TraceryNode.prototype.expand = function(context) {
 			break;
 		case "plaintext":
 			this.finished = this.template.value;
+			break;
+
+		case "number":
+			this.finished = this.template.textValue
+			break;
+		case "boolean":
+			this.finished = this.template.textValue
 			break;
 		default:
 			console.warn("unknown type: ", this.type);
@@ -281,9 +325,9 @@ function traceryTagToRegex(key, grammar) {
 
 function getMatchBid(grammar, matchRule, sample) {
 	let reg = traceryToRegex(matchRule, grammar);
-	
+
 	let match = reg.exec(sample);
-	
+
 
 	if (match === null)
 		return {

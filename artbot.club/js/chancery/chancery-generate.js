@@ -1,4 +1,31 @@
 //===========================================
+let chanceryGrammar = new TraceryGrammar({
+	char: "abcdefghijklmnopqrstuvwxyzaaaiiooeiou".split(""),
+	shortString: ["#char#", "#char##char#", "#char##char##char#"],
+	midString: ["#char##char##char##char#", "#char##char##char##char##char#"],
+	saycond: ["'#shortString#'"],
+	sayaction: ["'\\#word\\#'", "'\\#sentence\\#'"],
+	digit: "0123456789".split(""),
+	tag: ["indoors", "outdoors", "land", "sea", "air"], 
+	tags: ["#tag# #tag#", "#tag#", ""], 
+	number: ["-#digit#", "#digit#", "-#digit#.#digit#", "#digit#.#digit#"],
+	valueop: "*^%/+-".split(""),
+	condop: "== != >= <= > <".split(" "),
+	actionop: "= /= += -= *= %= ^=".split(" "),
+	variable: ["x", "y", "z"],
+	target: ["@", "@", "^", "^.#tag#",".#tag#", "#stateID#", "#stateID#"],
+	valuecond: ["#variable#","#variable#", "#variable#", "#number#","#number#", "#number#", "#number#", "(#valuecond#)#valueop##valuecond#","#valuecond##valueop#(#valuecond#)", "(#number##valueop##valuecond#)", "#valuecond##valueop##number#"],
+	valueaction: ["#variable##actionop##valuecond#"],
+	expcond: ["#valuecond##condop##valuecond#"],
+	condition: ["#expcond#", "wait:#valuecond#"],
+	conditions: ["#saycond# #condition#", "#condition#", "#saycond#"],
+	action: ["#valueaction#", "#sayaction#"],
+	actions: ["#action# #action#", "#action#", "#action# #action# #action#"],
+	exit: "#conditions# ->#target# #actions#",
+	onEnter: ["#actions#", ""],
+	onExit: ["#actions#", ""],
+})
+
 
 // Create a language
 function createRandomGrammar() {
@@ -19,8 +46,8 @@ function createRandomGrammar() {
 	let vowelCount = Math.floor(Math.random() * 3 + 3);
 	let consCount = Math.floor(Math.random() * 3 + 3);
 	let vowels = ["a", "ae", "ia", "ua", "a", "e", "io", "oi", "i", "o", "a", "i", "o", "a", "i", "o", "a", "oo", "ou", "uo", "io", "ee", "ya", "yo", "e", "i", "o", "u", "a", "e", "i", "o", "a", "e", "i", "o", "u"]
-	let endCons = ["st", "ll", "ff", "rf", "rg", "rt", "rs", "ck", "nd", "rt", "rd", "ss", "ss",  "rth", "rst", "nk", "ng", "tt", "pp", "nn", "mm", "lph", "tl", "mn", "rm", "rn", "wn", "wl", "zz", "x", "ts", "tz", "bs", "cks", "lls"]
-	let cons = ["n", "m", "s", "t", "r", "b", "d", "n", "m", "s", "t", "r", "b", "d", "n", "m", "s", "t", "r", "b", "d", "b", "c", "ch", "d", "d", "f", "dh", "g", "gh", "h", "j", "k", "l", "m", "n", "p", "m", "n", "p", "q", "r", "s", "r", "s", "t", "st", "sp", "sh", "th", "t", "v", "w",  "y", "z"]
+	let endCons = ["st", "ll", "ff", "rf", "rg", "rt", "rs", "ck", "nd", "rt", "rd", "ss", "ss", "rth", "rst", "nk", "ng", "tt", "pp", "nn", "mm", "lph", "tl", "mn", "rm", "rn", "wn", "wl", "zz", "x", "ts", "tz", "bs", "cks", "lls"]
+	let cons = ["n", "m", "s", "t", "r", "b", "d", "n", "m", "s", "t", "r", "b", "d", "n", "m", "s", "t", "r", "b", "d", "b", "c", "ch", "d", "d", "f", "dh", "g", "gh", "h", "j", "k", "l", "m", "n", "p", "m", "n", "p", "q", "r", "s", "r", "s", "t", "st", "sp", "sh", "th", "t", "v", "w", "y", "z"]
 	let startCons = ["dr", "chr", "shr", "fr", "fl", "kr", "kl", "pr", "pl", "sl", "sm", "wh", "wr"]
 
 
@@ -96,7 +123,7 @@ function createRandomGrammar() {
 
 
 	function getWord() {
-		let w = toSyl(getRandom(["0v", "0v", "v", "0v", "v", "0v1v","0v", "0v", "v", "0v", "v", "0v1v", "0v'v", "0v'", "0v0v", "0v10v","0v10v","0v10v","0v'v", "0v'", "0v0v", "0v10v", "0v10v0v"]), .99);
+		let w = toSyl(getRandom(["0v", "0v", "v", "0v", "v", "0v1v", "0v", "0v", "v", "0v", "v", "0v1v", "0v'v", "0v'", "0v0v", "0v10v", "0v10v", "0v10v", "0v'v", "0v'", "0v0v", "0v10v", "0v10v0v"]), .99);
 		if (Math.random() > .5)
 			w += getRandom(grammar.endc);
 		return w;
@@ -125,11 +152,15 @@ function createRandomGrammar() {
 }
 
 let sharedGrammar = createRandomGrammar()
+
 function createRandomChancery() {
+
+
 	let map = {
 		states: {},
 		grammar: sharedGrammar
 	}
+
 
 	let stateNames = ["origin"];
 	let stateCount = Math.random() * 1 + 1;
@@ -137,100 +168,33 @@ function createRandomChancery() {
 		stateNames.push("state" + i)
 	}
 
+	chanceryGrammar.setRules("stateID", stateNames);
+
+
 	// Create random states
 	stateNames.forEach(id => {
 		let exits = [];
 		// Random exits
-		let exitCount = Math.floor(Math.random() * 3 + Math.random()) + 1;
-
+		let exitCount = Math.floor(Math.random() * 3 + Math.random()) + 3;
 		for (var i = 0; i < exitCount; i++) {
-			let conditions = [];
-
-			if (Math.random() > .5) {
-				conditions.push({
-					type: "wait",
-					value: Math.floor(Math.random() * 3) + 1
-				})
-			}
-
-			// Require a random word from the grammar
-			if (Math.random() > .5) {
-				conditions.push({
-					type: "say",
-					value: getRandom(map.grammar.word)
-				})
-			}
-
-			if (conditions.length === 0 || Math.random() > .5) {
-				conditions.push({
-					type: "expression",
-					lhs: getRandom(["x", "y", "z"]),
-					op: getRandom([">", ">=", "==", "!=", "<=", "<"]),
-					rhs: Math.floor(Math.random() * 3) + 1,
-				});
-			}
-
-
-
-			let actions = [];
-
-			let actionCount = Math.floor(Math.random() * Math.random() * 4) + Math.random();
-			for (var j = 0; j < actionCount; j++) {
-				if (Math.random() > .4) {
-					actions.push({
-						type: "say",
-						value: getRandom(["#sentence#", "#phrase#"])
-					})
-				} else {
-					actions.push({
-						type: "expression",
-						lhs: getRandom(["x", "y", "z"]),
-						op: getRandom(["=", "%=", "-=", "/=", "*=", "%="]),
-						rhs: Math.floor(Math.random() * 3) + 1,
-					})
-				}
-
-			}
-
-
-			function getRaw(c, type) {
-				switch (c.type) {
-					case "wait":
-						return "wait:" + c.value;
-					case "expression":
-						return c.lhs + " " + c.op + " " + c.rhs;
-					case "say":
-						return '"' + c.value + '"'
-					default:
-						return "[[weird " + type + "]]"
-				}
-			}
-			conditions.forEach(c => c.raw = getRaw(c, "condition"))
-			actions.forEach(c => c.raw = getRaw(c, "action"))
-
-
-			let target = getRandom(stateNames);
-			let raw = conditions.map(a => a.raw).join("") +
-				" ->" + target + " " +
-				actions.map(a => a.raw).join("")
-
-			exits.push({
-				raw: raw,
-				conditions: conditions,
-				actions: actions,
-				target: target
-			})
+			exits[i] = chanceryGrammar.flatten("#exit#")
+			
 		}
+
 
 		let state = {
 			id: id,
+			tags: chanceryGrammar.flatten("#tags#"),
 			onEnterSay: "in " + id + ", " + utilities.words.getRandomWord() + getRandom(["?", "!", "."]),
+			onEnter: chanceryGrammar.flatten("#actions#"),
+			onExit: chanceryGrammar.flatten("#actions#"),
 			exits: exits
 		}
 
 
 		map.states[id] = state;
 	})
+	console.log(map);
 
 	return map
 }

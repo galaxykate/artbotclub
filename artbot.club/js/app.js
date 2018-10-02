@@ -1,4 +1,4 @@
-let startChanceries = ["hellobot", "letterbot", "buzzbot"];
+let startChanceries = ["coffee"];
 let paused = false;
 let pauseStart;
 
@@ -29,20 +29,25 @@ for (var i = 0; i < 0; i++) {
 let room;
 $(function() {
 
-	availableChanceries = mapObjectToArray(localChanceries, c => c)
-		.concat(mapObjectToArray(testChanceries, c => c))
 
-
-	room = new Room(startChanceries.map(id => {
+	autospawnChanceries = startChanceries.map(id => {
 		if (localChanceries[id])
 			return localChanceries[id]
 		console.warn("no local chancery named: " + id)
-	}));
+	})
 
-	room.createUI($("#main-cols"));
+	autospawnChanceries = autospawnChanceries.concat(mapObjectToArray(testChanceries, c => c))
+	room = new Room();
+
+
 	room.getMessage({
 		msg: "HELLO, WORLD"
 	})
+
+	console.log(autospawnChanceries)
+	room.start(autospawnChanceries);
+
+	let roomUI = new RoomUI($("#main-cols"),$("#main-overlay"), room, 3);
 
 
 

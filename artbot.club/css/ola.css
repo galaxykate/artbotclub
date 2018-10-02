@@ -5,6 +5,60 @@ html, body, main {
 	font-family: 'Didact Gothic', sans-serif;
 }
 
+#main-overlay {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	
+	left: 0px;
+	top: 0px;
+
+	pointer-events: none;
+}
+
+
+.overlay {
+	
+width: 100%;
+height: 100%
+	position: absolute;
+	pointer-events: all;
+
+}
+
+
+
+.overlay-bg {
+	width: 100%;
+	height: 100%;
+	left: 0px;
+	top: 0px;
+	position: absolute;
+	pointer-events: all;
+	background: rgba(0, 0, 0, .4);
+	
+	display: flex;
+	
+}
+.overlay-center {
+	display: flex;
+	flex: 1;
+	margin: 50px;
+	position: relative;
+	pointer-events: all;
+	
+	
+	
+}
+
+
+
+.timer {
+	width: 16px;
+	height: 16px;
+	background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
+	border-radius: 50%
+}
 
 
 .chat-messageholder {
@@ -133,6 +187,18 @@ html, body, main {
 	flex-direction: column;
 }
 
+.flagsquare {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	margin: 3px;
+	background-color: hsla(40, 50%, 95%);
+	box-shadow: 1px 1px 1px rgba(0, 0, 0, .3);
+}
+
+.flagsquare.active  {
+background-color: hsla(40, 90%, 50%);
+}
 
 .card {
 	flex: 1;

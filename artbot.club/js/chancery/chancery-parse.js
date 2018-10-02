@@ -7,7 +7,6 @@ let expressionSplitterHierarchy0 = [
 	["^", "%"],
 ]
 
-let targetMacros = ["*", "@"];
 
 let expressionSplitterHierarchy = {}
 for (var i = 0; i < expressionSplitterHierarchy0.length; i++) {
@@ -54,6 +53,7 @@ function createSayAction(msg) {
 	}
 }
 
+// Parse a list of actions, or conditions
 function parseChanceryCondActionList(list, isCondition) {
 	if (typeof list === "string")
 		list = splitOnProtected(chanceryProtection, "expression", list, " ") // TODO, do this with parsing
@@ -63,11 +63,21 @@ function parseChanceryCondActionList(list, isCondition) {
 	}
 
 	list = list.filter(s => s.length > "");
-	return list.map((action, index) => parseChanceryCondAction(action, isCondition, index));
+	return list.map((action, index) => {
+		let parsed = parseChanceryCondAction(action, isCondition, index)
+		if (parsed.type === "path") {
+			console.warn("Bad syntax on ", list.join(" \t ") + ", \nparsed as a path with no actions taken, was this supposed to be in quotations?")
+		}
+		return parsed;
+	});
+
+	
 }
 
 // Non-tree expressions (no == * % && etc)
 function parseChanceryUnitExpression(rawExp) {
+
+
 	// Clip extra space and escape out if its just an empty string
 	rawExp = rawExp.trim();
 	if (rawExp.length === 0)
@@ -242,13 +252,9 @@ function parseChanceryExit(rawExit, index) {
 			let conditions = parseChanceryCondActionList(s[0], true);
 			let s2 = splitOnProtected(chanceryProtection, "expression", s[1], " ");
 			let actions = parseChanceryCondActionList(s2.slice(1), false);
-			let target = {
-				type: "targetmacro",
-				value: s2[0]
-			}
 
-			if (targetMacros.indexOf(s2[0]) < 0)
-				target = parseChanceryKey(s2[0]);
+			let target = parseChanceryKey(s2[0]);
+
 
 
 			return {
