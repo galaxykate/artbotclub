@@ -1,0 +1,29 @@
+
+Vue.component("selector-set",  {
+	template: `
+		<div class="selector-set">
+			<button 
+				v-for="item in options"
+				@click="setVal(item)" 
+				:class="{selected:selected===item}">
+				{{item.label}}
+			</button>
+		</div>`,
+
+	methods:{
+		setVal(item) {
+			this.selected = item
+			this.value = item.val
+			this.$emit("input", item.val)
+		}
+	},
+	data() {
+		return {
+			selected: this.options[defaultIndex]
+		}
+	},
+
+	props:["options", "defaultIndex"]
+
+
+})

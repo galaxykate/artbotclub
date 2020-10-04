@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>chancery: easy bot-making</title>
+	<meta name="description" content="chancery">
+	<meta name="author" content="@galaxykate">
+	<link rel="stylesheet" href="css/page.css">
+	<link href="https://fonts.googleapis.com/css?family=Montserrat:300,300i,600" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Averia+Serif+Libre|Chicle|Montserrat:300,300i,600" rel="stylesheet">
+</head>
+
+<body>
+
+	
+	<main>
+		
+		<div id="main-cols">
+
+			<div id="col-left"  class="column">
+			</div>
+			
+			<div id="col-center" class="column">
+			
+				<h1>Chancery</h1>
+				<h4>easy bot-making by <a href="">@galaxykate</a></h4>
+
+				<h2></h2>
+					<p>Bottery is a combination of a simulator, language, parser, and IDE for finite state machine (FSM) chatbots.  It was developed at Google from April 2016 to February 2017, then <a href='https://github.com/google/bottery'>open-sourced under the name 'Bottery'</a> in October 2017.</p> (I've had to change the name due to a namespace collision with another bot-making library)
+
+					<p>Chancery is based on lessons from my previous language-engine-and-IDE library, <a href='http://tracery.io'>Tracery</a>.  Tracery runs at least 11,000 active Twitterbots, and created a Cambrian explosion of new bot forms and unexpected bot poetics.  It succeeded (rather accidentally) by combining a novice-friendly online editor with a on-page simulator and a "programming language" whose programs could be expressed as a JSON file (and safely run on a 3rd part site like <a href='https://cheapbotsdonequick.com/'>CheapBotsDoneQuick</a>)</p> 
+
+					<p>FSM libraries already exist, of course, but with Bottery, the goal is for users to be able to describe interesting, complex, and generative bot conversations, in a JSON format.  These bots can be standalone experiments, or hosted on a similar site to CheapBotsDoneQuick for conversational agents that could converse with users on Twitter, smart speakers, or even be casually embedded as a part of webpages or Unity games, as Tracery was. </p> 
+
+					<p>Bottery programs are "maps" describing finite state machines.  Each map has a dictionary of states. Each state has a list of exits with preconditions and post actions, and actions that it can fire on entering, exiting, etc.  When giving bottery tutorials, I describe maps as boardgame boards with individual pointers moving around them and changing scores.  Boardgame players know that moving between states can mean spatial movement, but also temporal (the Game of Life) or metaphorical/emotional/moral (Chutes and Ladders) movement, a connection which helps new users understand how to represent conversational spaces as FSMs.</p> 
+
+					<p>Bottery is built to use Tracery for generative text as well as parsing. Bottery pointers can change the blackboard (to set a user's name or hitpoints), and actions that output text can call on Tracery to expand statements like "#/userName# has #/data/points#, #congratulations#". </p> 
+
+					<p>We can also use Tracery grammars in *reverse*. Why? It is common for conversational bot authors to want to respond to prompts that the user may phrase in different ways ("yeah", "yes", "no, yeah totally"). Machine-learning can help with this, but isn't easliy controlled by an author.  Here, the author writes a grammar capable of generating input values. The exit condition for a state might be "#yes#", which matches any generation of that Tracery rule.  Conveniently, this also gives us a way to simulate the *users* of the system, either autonomously for testing, or to give suggested inputs.</p> 
+
+					<p>Bottery is a system under continuing development, but its been able to make a number of interesting bot prototypes very quickly. </p>  
+
+					<p>The original version is <a href="https://github.com/google/bottery">on GitHub</a>.  It playable  <a href="https://rawgit.com/google/bottery/master/index.html">live</a> and the latest version is available <a href="/chancery/bottery/index.html">here</a></p> 
+
+					Citations:
+					Compton, Kate, Ben Kybartas, and Michael Mateas. "Tracery: an author-focused generative text tool." International Conference on Interactive Digital Storytelling. Springer, Cham, 2015.
+					Compton, Kate. "Bot Poetics".  Talk at Interrupt.XYZ, Providence RI, (https://vimeo.com/225566776)  2017.
+				<h2>History</h2>
+
+
+			
+			</div>
+			<div id="col-right" class="column">
+			
+	
+			
+	
+			
+			</div>
+		
+		</div>
+	</main>
+
+
+</body>
+
+
+
+</html>
